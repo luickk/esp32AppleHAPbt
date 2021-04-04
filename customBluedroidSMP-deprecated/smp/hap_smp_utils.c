@@ -21,17 +21,17 @@
  *  This file contains functions for the SMP L2CAP utility functions
  *
  ******************************************************************************/
-#include "common/bt_target.h"
+#include "bt_target.h"
 
 #if SMP_INCLUDED == TRUE
 
-#include "stack/bt_types.h"
+#include "bt_types.h"
 //#include "bt_utils.h"
 #include <string.h>
 //#include <ctype.h>
-#include "stack/hcidefs.h"
-#include "stack/btm_ble_api.h"
-#include "stack/l2c_api.h"
+#include "hcidefs.h"
+#include "btm_ble_api.h"
+#include "l2c_api.h"
 #include "l2c_int.h"
 #include "hap_smp_int.h"
 #include "device/controller.h"

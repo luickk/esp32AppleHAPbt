@@ -25,7 +25,7 @@
 #pragma once
 
 #include "hap_p_256_multprecision.h"
-#include "common/bt_target.h"
+#include "bt_target.h"
 
 typedef unsigned long  DWORD;
 

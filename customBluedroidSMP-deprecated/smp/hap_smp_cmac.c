@@ -22,16 +22,16 @@
  *
  ******************************************************************************/
 
-#include "common/bt_target.h"
-#include "osi/allocator.h"
+#include "bt_target.h"
+#include "allocator.h"
 
 #if SMP_INCLUDED == TRUE
 //    #include <stdio.h>
 #include <string.h>
 
-#include "stack/btm_ble_api.h"
+#include "btm_ble_api.h"
 #include "hap_smp_int.h"
-#include "stack/hcimsgs.h"
+#include "hcimsgs.h"
 
 typedef struct {
     UINT8               *text;

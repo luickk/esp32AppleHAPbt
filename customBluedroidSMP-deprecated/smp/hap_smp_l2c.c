@@ -22,14 +22,14 @@
  *
  ******************************************************************************/
 
-#include "common/bt_target.h"
-#include "osi/allocator.h"
+#include "bt_target.h"
+#include "allocator.h"
 
 #if SMP_INCLUDED == TRUE
 
 #include <string.h>
-#include "stack/btm_ble_api.h"
-#include "stack/l2c_api.h"
+#include "btm_ble_api.h"
+#include "l2c_api.h"
 
 #include "hap_smp_int.h"
 

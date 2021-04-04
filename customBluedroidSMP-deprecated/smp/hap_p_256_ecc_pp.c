@@ -26,7 +26,7 @@
 #include <string.h>
 #include "hap_p_256_ecc_pp.h"
 #include "hap_p_256_multprecision.h"
-#include "common/bt_target.h"
+#include "bt_target.h"
 
 #if SMP_DYNAMIC_MEMORY == FALSE
 elliptic_curve_t curve;

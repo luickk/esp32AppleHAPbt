@@ -23,7 +23,7 @@
  ******************************************************************************/
 
 #include <string.h>
-#include "common/bt_target.h"
+#include "bt_target.h"
 #include "hap_p_256_ecc_pp.h"
 #include "hap_p_256_multprecision.h"
 

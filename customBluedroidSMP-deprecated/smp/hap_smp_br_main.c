@@ -15,8 +15,8 @@
  *  limitations under the License.
  *
  ******************************************************************************/
-ppp
-#include "common/bt_target.h"
+
+#include "bt_target.h"
 
 #include <string.h>
 #include "hap_smp_int.h"

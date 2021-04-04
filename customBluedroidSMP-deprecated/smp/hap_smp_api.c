@@ -24,19 +24,19 @@
  ******************************************************************************/
 #include <string.h>
 
-#include "common/bt_target.h"
+#include "bt_target.h"
 //#include "bt_utils.h"
 #if SMP_INCLUDED == TRUE
 #include "hap_smp_int.h"
-#include "stack/smp_api.h"
-#include "stack/l2cdefs.h"
+#include "smp_api.h"
+#include "l2cdefs.h"
 #include "l2c_int.h"
 #include "btm_int.h"
-#include "stack/hcimsgs.h"
+#include "hcimsgs.h"
 
-#include "stack/btu.h"
+#include "btu.h"
 #include "hap_p_256_ecc_pp.h"
-#include "osi/allocator.h"
+#include "allocator.h"
 
 /*******************************************************************************
 **

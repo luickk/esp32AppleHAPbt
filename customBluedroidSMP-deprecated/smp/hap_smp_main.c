@@ -16,13 +16,13 @@
  *
  ******************************************************************************/
 
-#include "common/bt_target.h"
+#include "bt_target.h"
 
 #if SMP_INCLUDED == TRUE
 
 #include <string.h>
 #include "hap_smp_int.h"
-kfdsopkfopsdkopfk
+
 const char *const smp_state_name [] = {
     "SMP_STATE_IDLE",
     "SMP_STATE_WAIT_APP_RSP",

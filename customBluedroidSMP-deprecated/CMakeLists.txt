@@ -1,5 +1,6 @@
-list(APPEND INCLUDE_DIRS
-  "smp/include")
+list(APPEND include_dirs
+  "smp/include"
+  "common/")
 
 list(APPEND srcs "smp/hap_aes.c"
   "smp/hap_p_256_curvepara.c"
@@ -19,4 +20,4 @@ list(APPEND srcs "smp/hap_aes.c"
 idf_component_register(SRCS "${srcs}"
                 INCLUDE_DIRS "${include_dirs}"
                 REQUIRES nvs_flash soc esp_timer
-                PRIV_REQUIRES esp_ipc)
+              PRIV_REQUIRES esp_ipc bt)
