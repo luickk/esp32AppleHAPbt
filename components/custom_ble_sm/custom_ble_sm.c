@@ -45,7 +45,8 @@
 #include <errno.h>
 #include "nimble/ble.h"
 #include "nimble/nimble_opt.h"
-#include "ble_sm.h"
+
+#include "custom_ble_sm.h"
 
 #include "../src/ble_hs_priv.h"
 #include "../src/ble_hs_resolv_priv.h"
@@ -2846,4 +2847,73 @@ ble_sm_create_chan(uint16_t conn_handle)
     chan->rx_fn = ble_sm_rx;
 
     return chan;
+}
+
+int
+custom_ble_gap_security_initiate(uint16_t conn_handle)
+{
+#if !NIMBLE_BLE_SM
+    return BLE_HS_ENOTSUP;
+#endif
+
+    struct ble_store_value_sec value_sec;
+    struct ble_store_key_sec key_sec;
+    struct ble_hs_conn_addrs addrs;
+    ble_hs_conn_flags_t conn_flags;
+    struct ble_hs_conn *conn;
+    int rc;
+
+    STATS_INC(ble_gap_stats, security_initiate);
+
+    ble_hs_lock();
+    conn = ble_hs_conn_find(conn_handle);
+    if (conn != NULL) {
+        conn_flags = conn->bhc_flags;
+        ble_hs_conn_addrs(conn, &addrs);
+
+        memset(&key_sec, 0, sizeof key_sec);
+        key_sec.peer_addr = addrs.peer_id_addr;
+    }
+    ble_hs_unlock();
+
+    if (conn == NULL) {
+        rc = BLE_HS_ENOTCONN;
+        goto done;
+    }
+
+    if (conn_flags & BLE_HS_CONN_F_MASTER) {
+        /* Search the security database for an LTK for this peer.  If one
+         * is found, perform the encryption procedure rather than the pairing
+         * procedure.
+         */
+        rc = ble_store_read_peer_sec(&key_sec, &value_sec);
+        if (rc == 0 && value_sec.ltk_present) {
+            rc = ble_sm_enc_initiate(conn_handle, value_sec.key_size,
+                                     value_sec.ltk, value_sec.ediv,
+                                     value_sec.rand_num,
+                                     value_sec.authenticated);
+            if (rc != 0) {
+                goto done;
+            }
+        } else {
+            rc = ble_sm_pair_initiate(conn_handle);
+            if (rc != 0) {
+                goto done;
+            }
+        }
+    } else {
+        rc = ble_sm_slave_initiate(conn_handle);
+        if (rc != 0) {
+            goto done;
+        }
+    }
+
+    rc = 0;
+
+done:
+    if (rc != 0) {
+        STATS_INC(ble_gap_stats, security_initiate_fail);
+    }
+
+    return rc;
 }

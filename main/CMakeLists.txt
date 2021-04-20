@@ -1,3 +1,3 @@
-idf_component_register(SRCS "hello_world_main.c"
+idf_component_register(SRCS "main.c" "gatt_svr.c"
                     INCLUDE_DIRS ""
-                    REQUIRES bt)
+                  REQUIRES bt custom_ble_sm)

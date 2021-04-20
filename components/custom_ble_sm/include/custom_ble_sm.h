@@ -86,6 +86,8 @@ extern "C" {
 #define BLE_SM_IOACT_NUMCMP                     4
 #define BLE_SM_IOACT_MAX_PLUS_ONE               5
 
+#define BLE_SM_PROC_F_BONDING 1
+
 struct ble_sm_io {
     uint8_t action;
     union {
@@ -95,13 +97,16 @@ struct ble_sm_io {
     };
 };
 
+
+int custom_ble_gap_security_initiate(uint16_t conn_handle);
+
 #if NIMBLE_BLE_SM
 int ble_sm_inject_io(uint16_t conn_handle, struct ble_sm_io *pkey);
+
 #else
 #define ble_sm_inject_io(conn_handle, pkey) \
     ((void)(conn_handle), BLE_HS_ENOTSUP)
 #endif
-
 #ifdef __cplusplus
 }
 #endif
