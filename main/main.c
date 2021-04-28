@@ -25,12 +25,16 @@
 #include "nimble/nimble_port.h"
 #include "nimble/nimble_port_freertos.h"
 
-#include "custom_ble_sm.h"
-
 #include "host/ble_hs.h"
 #include "host/util/util.h"
 #include "console/console.h"
 #include "services/gap/ble_svc_gap.h"
+
+#include "hap_ids.h"
+#include "hap_util.h"
+
+#include "blehr_sens.h"
+#include "hap_test.h"
 
 static const char *tag = "apple home test";
 
@@ -200,7 +204,7 @@ blehr_gap_event(struct ble_gap_event *event, void *arg)
 
         conn_handle = event->connect.conn_handle;
 
-        int rc = custom_ble_gap_security_initiate(conn_handle);
+        int rc = ble_gap_security_initiate(conn_handle);
         assert(rc == 0);
 
         break;
@@ -279,6 +283,8 @@ void blehr_host_task(void *param)
 void app_main(void)
 {
     int rc;
+
+    test_uuid_16_to_apple_hap_uuid();
 
     /* Initialize NVS — it is used to store PHY calibration data */
     esp_err_t ret = nvs_flash_init();
