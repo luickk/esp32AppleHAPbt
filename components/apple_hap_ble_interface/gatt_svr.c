@@ -24,37 +24,48 @@
 #include "host/ble_uuid.h"
 #include "services/gap/ble_svc_gap.h"
 #include "services/gatt/ble_svc_gatt.h"
-#include "blehr_sens.h"
 
-static const char *manuf_name = "Apache Mynewt ESP32 devkitC";
-static const char *model_num = "Mynewt HR Sensor demo";
+#include "gatt_cfg.h"
+#include "hap_ids.h"
+
+static const char *manuf_name = "fake apple";
+static const char *model_num = "1.0";
 uint16_t hrs_hrm_handle;
 
 static int
-gatt_svr_chr_access_heart_rate(uint16_t conn_handle, uint16_t attr_handle,
+gatt_svr_chr_access_pairing(uint16_t conn_handle, uint16_t attr_handle,
                                struct ble_gatt_access_ctxt *ctxt, void *arg);
 
 static int
 gatt_svr_chr_access_device_info(uint16_t conn_handle, uint16_t attr_handle,
                                 struct ble_gatt_access_ctxt *ctxt, void *arg);
 
+// full list of characteristic flags : https://github.com/apache/mynewt-nimble/blob/master/nimble/host/include/host/ble_gatt.h
 static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
     {
         /* Service: Heart-rate */
         .type = BLE_GATT_SVC_TYPE_PRIMARY,
-        .uuid = BLE_UUID16_DECLARE(GATT_HRS_UUID),
+        .uuid = BLE_UUID128_DECLARE(UUID_128_SERVICE_PAIRING),
         .characteristics = (struct ble_gatt_chr_def[])
         { {
-                /* Characteristic: Heart-rate measurement */
-                .uuid = BLE_UUID16_DECLARE(GATT_HRS_MEASUREMENT_UUID),
-                .access_cb = gatt_svr_chr_access_heart_rate,
+                .uuid = BLE_UUID128_DECLARE(UUID_128_CHARACTERISTIC_PAIRING_SETUP),
+                .access_cb = gatt_svr_chr_access_pairing,
                 .val_handle = &hrs_hrm_handle,
-                .flags = BLE_GATT_CHR_F_NOTIFY,
+                .flags = BLE_GATT_CHR_F_READ |
+                 BLE_GATT_CHR_F_WRITE ,
             }, {
-                /* Characteristic: Body sensor location */
-                .uuid = BLE_UUID16_DECLARE(GATT_HRS_BODY_SENSOR_LOC_UUID),
-                .access_cb = gatt_svr_chr_access_heart_rate,
+                .uuid = BLE_UUID128_DECLARE(UUID_128_CHARACTERISTIC_PAIRING_VERIFY),
+                .access_cb = gatt_svr_chr_access_pairing,
+                .flags = BLE_GATT_CHR_F_READ |
+                 BLE_GATT_CHR_F_WRITE ,
+            }, {
+                .uuid = BLE_UUID128_DECLARE(UUID_128_CHARACTERISTIC_PAIRING_FEATURE),
+                .access_cb = gatt_svr_chr_access_pairing,
                 .flags = BLE_GATT_CHR_F_READ,
+            }, {
+                .uuid = BLE_UUID128_DECLARE(UUID_128_CHARACTERISTIC_PAIRING_PAIRINGS),
+                .access_cb = gatt_svr_chr_access_pairing,
+                .flags = BLE_GATT_CHR_F_READ_AUTHEN | BLE_GATT_CHR_F_WRITE_AUTHEN,
             }, {
                 0, /* No more characteristics in this service */
             },
@@ -64,19 +75,45 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
     {
         /* Service: Device Information */
         .type = BLE_GATT_SVC_TYPE_PRIMARY,
-        .uuid = BLE_UUID16_DECLARE(GATT_DEVICE_INFO_UUID),
+        .uuid = BLE_UUID16_DECLARE(UUID_128_SERVICE_ACCESSORY_INFORMATION),
         .characteristics = (struct ble_gatt_chr_def[])
         { {
-                /* Characteristic: * Manufacturer name */
-                .uuid = BLE_UUID16_DECLARE(GATT_MANUFACTURER_NAME_UUID),
+                .uuid = BLE_UUID128_DECLARE(UUID_128_CHARACTERISTIC_FIRMWARE_REVISION),
                 .access_cb = gatt_svr_chr_access_device_info,
-                .flags = BLE_GATT_CHR_F_READ,
+                .flags = BLE_GATT_CHR_F_READ_AUTHEN,
             }, {
-                /* Characteristic: Model number string */
-                .uuid = BLE_UUID16_DECLARE(GATT_MODEL_NUMBER_UUID),
+                .uuid = BLE_UUID128_DECLARE(UUID_128_CHARACTERISTIC_IDENTIFY),
                 .access_cb = gatt_svr_chr_access_device_info,
-                .flags = BLE_GATT_CHR_F_READ,
+                .flags = BLE_GATT_CHR_F_WRITE_AUTHEN,
+            },  {
+                .uuid = BLE_UUID128_DECLARE(UUID_128_CHARACTERISTIC_MANUFACTURER),
+                .access_cb = gatt_svr_chr_access_device_info,
+                .flags = BLE_GATT_CHR_F_READ_AUTHEN,
+            },  {
+                .uuid = BLE_UUID128_DECLARE(UUID_128_CHARACTERISTIC_NAME),
+                .access_cb = gatt_svr_chr_access_device_info,
+                .flags = BLE_GATT_CHR_F_READ_AUTHEN,
+            },  {
+                .uuid = BLE_UUID128_DECLARE(UUID_128_CHARACTERISTIC_SERIAL_NUMBER),
+                .access_cb = gatt_svr_chr_access_device_info,
+                .flags = BLE_GATT_CHR_F_READ_AUTHEN,
             }, {
+                0, /* No more characteristics in this service */
+            },
+        }
+    },
+
+    {
+        /* Service: Device Information */
+        .type = BLE_GATT_SVC_TYPE_PRIMARY,
+        .uuid = BLE_UUID16_DECLARE(UUID_128_SERVICE_PROTOCOL_INFORMATION),
+        .characteristics = (struct ble_gatt_chr_def[])
+        { {
+                .uuid = BLE_UUID128_DECLARE(UUID_128_CHARACTERISTIC_VERSION),
+                .access_cb = gatt_svr_chr_access_device_info,
+                .flags = BLE_GATT_CHR_F_READ_AUTHEN,
+            },
+            {
                 0, /* No more characteristics in this service */
             },
         }
@@ -88,7 +125,7 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
 };
 
 static int
-gatt_svr_chr_access_heart_rate(uint16_t conn_handle, uint16_t attr_handle,
+gatt_svr_chr_access_pairing(uint16_t conn_handle, uint16_t attr_handle,
                                struct ble_gatt_access_ctxt *ctxt, void *arg)
 {
     /* Sensor location, set to "Chest" */
@@ -98,14 +135,24 @@ gatt_svr_chr_access_heart_rate(uint16_t conn_handle, uint16_t attr_handle,
 
     uuid = ble_uuid_u16(ctxt->chr->uuid);
 
-    if (uuid == GATT_HRS_BODY_SENSOR_LOC_UUID) {
-        rc = os_mbuf_append(ctxt->om, &body_sens_loc, sizeof(body_sens_loc));
+    if (uuid == UUID_128_CHARACTERISTIC_PAIRING_SETUP) {
+        // rc = os_mbuf_append(ctxt->om, &body_sens_loc, sizeof(body_sens_loc));
+        printf("PAIRING_SETUP ACCESSED");
+    } else if (uuid == UUID_128_CHARACTERISTIC_PAIRING_VERIFY) {
+        // rc = os_mbuf_append(ctxt->om, &body_sens_loc, sizeof(body_sens_loc));
+        printf("VERIFY ACCESSED");
 
-        return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
+    } else if (uuid == UUID_128_CHARACTERISTIC_PAIRING_FEATURE) {
+        // rc = os_mbuf_append(ctxt->om, &body_sens_loc, sizeof(body_sens_loc));
+        printf("FEATURE ACCESSED");
+
+    } else if (uuid == UUID_128_CHARACTERISTIC_PAIRING_PAIRINGS) {
+        // rc = os_mbuf_append(ctxt->om, &body_sens_loc, sizeof(body_sens_loc));
+        printf("PAIRING_PAIRINGS ACCESSED");
+
     }
 
-    assert(0);
-    return BLE_ATT_ERR_UNLIKELY;
+    return 0;
 }
 
 static int
