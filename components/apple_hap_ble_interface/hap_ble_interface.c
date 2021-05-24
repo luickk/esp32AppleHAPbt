@@ -26,55 +26,36 @@ blehr_advertise(void)
     int rc;
 
     /*
-     *  Set the advertisement data included in our advertisements:
-     *     o Flags (indicates advertisement type and other general info)
-     *     o Advertising tx power
-     *     o Device name
-     */
-    memset(&fields, 0, sizeof(fields));
-
-    /*
      * Advertise two flags:
      *      o Discoverability in forthcoming advertisement (general)
      *      o BLE-only (BR/EDR unsupported)
      */
     fields.flags = ADV_DATA_FLAG;
 
-    cu16_t company_id;
-    company_id.uint16 = (uint16_t)APPLE_COMPANY_IDENTIFIER;
-
     cu16_t accessory_category;
     accessory_category.uint16 = (uint16_t)AC_FANS;
 
     uint8_t *device_id = generate_device_id48();
 
-    uint8_t sf_paired = 0;
-    uint8_t stl = 0;
-    stl |= 1UL << 0;
-    stl |= 1UL << 1;
-    stl |= 1UL << 2;
-    stl |= 1UL << 3;
-    stl |= 1UL << 7;
+    uint8_t adv_manufacturer_data[] = { APPLE_COMPANY_IDENTIFIER, 0x0, ADV_DATA_MANUFACTURER_DATA_TYPE,
+      SUBTYPE_LENGTH, ACCESSORY_UNPAIRED, device_id[0], device_id[1], device_id[2], device_id[3],
+      device_id[4], device_id[5], accessory_category.ch1, accessory_category.ch2, 1, 1, 0x1, 0x02, 0x0, 0x0, 0x0, 0x0};
 
-    uint8_t *adv_manufacturer_data[23] = {
-      0x16, ADV_DATA_MANUFACTURER_TYPE, company_id.ch1, company_id.ch2, ADV_DATA_MANUFACTURER_DATA_TYPE,
-      stl, sf_paired, device_id[0], device_id[1], device_id[2], device_id[3], device_id[4], device_id[5],
-      accessory_category.ch1, accessory_category.ch2, 1, 1, 12, 0x02, 0x0, 0x0, 0x0, 0x0};
-
-    fields.mfg_data = (uint8_t *)adv_manufacturer_data;
-    fields.mfg_data_len = 23;
-
-    /*
-     * Indicate that the TX power level field should be included; have the
-     * stack fill this value automatically.  This is done by assigning the
-     * special value BLE_HS_ADV_TX_PWR_LVL_AUTO.
-     */
-    fields.tx_pwr_lvl_is_present = 1;
-    fields.tx_pwr_lvl = BLE_HS_ADV_TX_PWR_LVL_AUTO;
+    fields.mfg_data = adv_manufacturer_data;
+    fields.mfg_data_len = sizeof adv_manufacturer_data;
 
     fields.name = (uint8_t *)device_name;
     fields.name_len = strlen(device_name);
     fields.name_is_complete = 1;
+
+
+    /*
+     *  Set the advertisement data included in our advertisements:
+     *     o Flags (indicates advertisement type and other general info)
+     *     o Advertising tx power
+     *     o Device name
+     */
+    memset(&fields, 0, sizeof(fields));
 
     rc = ble_gap_adv_set_fields(&fields);
     if (rc != 0) {
