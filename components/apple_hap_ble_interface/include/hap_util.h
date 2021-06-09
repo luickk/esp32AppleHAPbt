@@ -9,11 +9,11 @@
 extern uint8_t apple_128_default_suffix[16];
 
 typedef union {
-    struct {
-        char ch1;
-        char ch2;
-    };
-    uint16_t uint16;
+  struct {
+    unsigned char ch1;
+    unsigned char ch2;
+  };
+  uint16_t uint16;
 } cu16_t;
 
 // uint64 mustn't be larger than 48 bit
